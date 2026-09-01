@@ -1,0 +1,135 @@
+/* =========================
+   SERVICES SECTION
+   ========================= */
+
+#services {
+    position: relative;
+}
+
+
+/* =========================
+   SERVICES GRID
+   ========================= */
+
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+
+/* =========================
+   SERVICE CARD
+   ========================= */
+
+.service-card {
+    padding: 36px 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.service-card::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.service-card:hover::after {
+    transform: scaleX(1);
+}
+
+
+/* =========================
+   SERVICE ICON
+   ========================= */
+
+.service-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(167, 139, 250, 0.08));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 20px;
+    color: var(--accent-soft);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.4s ease;
+}
+
+.service-card:hover .service-icon {
+    transform: translateY(-3px) scale(1.1);
+    box-shadow: 0 8px 20px -4px var(--accent-glow);
+}
+
+
+/* =========================
+   SERVICE TEXT
+   ========================= */
+
+.service-card h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    transition: color 0.3s ease;
+}
+
+.service-card:hover h3 {
+    color: var(--accent-soft);
+}
+
+.service-card p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+
+/* =========================
+   SERVICES CTA
+   ========================= */
+
+.services-cta {
+    text-align: center;
+    margin-top: 50px;
+}
+
+.services-cta p {
+    color: var(--text-muted);
+    font-size: 16px;
+    margin-bottom: 16px;
+}
+
+
+/* =========================
+   RESPONSIVE
+   ========================= */
+
+@media (max-width: 1000px) {
+    .services-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .services-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .service-card {
+        padding: 28px 20px;
+    }
+}
