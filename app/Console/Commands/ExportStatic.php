@@ -37,7 +37,7 @@ class ExportStatic extends Command
 
         foreach ($routes as $route) {
             $name = $route->getName();
-            $uri = $route->getUri();
+            $uri = $route->uri();
 
             try {
                 $request = Request::create($uri, 'GET');

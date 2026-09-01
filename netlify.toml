@@ -1,0 +1,3 @@
+[build]
+  command = "php artisan app:export-static"
+  publish = "dist"
