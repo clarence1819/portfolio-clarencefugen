@@ -9,82 +9,434 @@ use Illuminate\Support\Facades\File;
 
 class ExportStatic extends Command
 {
-    protected $signature = 'app:export-static {--url= : Base URL for asset generation (e.g. https://yoursite.netlify.app)}';
+    protected $signature = 'app:export-static';
 
-    protected $description = 'Export all web routes to static HTML files in dist/';
+    protected $description = 'Export Laravel pages to static HTML files in dist/';
+
 
     public function handle(): int
     {
-        $baseUrl = $this->option('url') ?: config('app.url', 'http://localhost');
-
-        config(['app.url' => $baseUrl]);
+        /*
+        |--------------------------------------------------------------------------
+        | DIST FOLDER
+        |--------------------------------------------------------------------------
+        */
 
         $distPath = base_path('dist');
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | DELETE OLD DIST
+        |--------------------------------------------------------------------------
+        */
+
         if (File::isDirectory($distPath)) {
+
             File::deleteDirectory($distPath);
+
         }
-        File::makeDirectory($distPath, 0755, true);
 
-        $this->copyDirectory(public_path(), $distPath);
-        File::delete($distPath . '/index.php');
 
-        $routes = collect(Route::getRoutes()->getRoutes())
-            ->filter(fn ($route) => in_array('web', $route->gatherMiddleware()))
-            ->filter(fn ($route) => $route->getName() !== null);
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE DIST
+        |--------------------------------------------------------------------------
+        */
 
-        $this->info("Exporting {$routes->count()} routes...");
+        File::makeDirectory(
+            $distPath,
+            0755,
+            true
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | COPY PUBLIC FILES
+        |--------------------------------------------------------------------------
+        */
+
+        $this->info('Copying public assets...');
+
+        $this->copyDirectory(
+            public_path(),
+            $distPath
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | REMOVE INDEX.PHP
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            File::exists(
+                $distPath . '/index.php'
+            )
+        ) {
+
+            File::delete(
+                $distPath . '/index.php'
+            );
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | GET ROUTES
+        |--------------------------------------------------------------------------
+        */
+
+        $routes = collect(
+            Route::getRoutes()->getRoutes()
+        )
+
+        ->filter(function ($route) {
+
+            return $route->getName() !== null;
+
+        })
+
+        ->filter(function ($route) {
+
+            return in_array(
+                'GET',
+                $route->methods()
+            );
+
+        })
+
+        ->filter(function ($route) {
+
+            return !str_contains(
+                $route->uri(),
+                '{'
+            );
+
+        });
+
+
+        $this->info(
+            "Exporting {$routes->count()} routes..."
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | EXPORT ROUTES
+        |--------------------------------------------------------------------------
+        */
 
         foreach ($routes as $route) {
+
             $name = $route->getName();
+
             $uri = $route->uri();
 
+
             try {
-                $request = Request::create($uri, 'GET');
-                $response = app('router')->dispatch($request);
 
-                if ($response instanceof \Illuminate\Http\RedirectResponse) {
-                    $this->warn("  Skipping redirect: {$name} ({$uri})");
+                /*
+                |--------------------------------------------------------------------------
+                | CREATE REQUEST
+                |--------------------------------------------------------------------------
+                */
+
+                $url = '/' .
+                    ltrim(
+                        $uri,
+                        '/'
+                    );
+
+
+                if ($url === '/') {
+
+                    $url = '/';
+
+                }
+
+
+                $request = Request::create(
+                    $url,
+                    'GET'
+                );
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | BIND ROUTE
+                |--------------------------------------------------------------------------
+                */
+
+                $route->bind(
+                    $request
+                );
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | GET CONTROLLER / CLOSURE
+                |--------------------------------------------------------------------------
+                */
+
+                $action =
+                    $route->getAction('uses');
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | EXECUTE ROUTE
+                |--------------------------------------------------------------------------
+                */
+
+                $response = app()->call(
+                    $action
+                );
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | REDIRECT
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    $response instanceof
+                    \Illuminate\Http\RedirectResponse
+                ) {
+
+                    $this->warn(
+                        "Skipping redirect: {$name}"
+                    );
+
                     continue;
+
                 }
 
-                $html = $response->getContent();
 
-                if ($uri === '' || $uri === '/') {
-                    $filePath = $distPath . '/index.html';
+                /*
+                |--------------------------------------------------------------------------
+                | GET HTML
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    $response instanceof
+                    \Illuminate\Http\Response
+                ) {
+
+                    $html =
+                        $response->getContent();
+
                 } else {
-                    $dirPath = $distPath . '/' . trim($uri, '/');
-                    File::makeDirectory($dirPath, 0755, true);
-                    $filePath = $dirPath . '/index.html';
+
+                    $html =
+                        (string) $response;
+
                 }
 
-                File::put($filePath, $html);
-                $this->info("  Exported: {$name} -> {$uri}");
+
+                /*
+                |--------------------------------------------------------------------------
+                | REMOVE LOCALHOST
+                |--------------------------------------------------------------------------
+                */
+
+                $html = preg_replace(
+                    '/https?:\/\/localhost/',
+                    '',
+                    $html
+                );
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | REMOVE EXTRA LOCALHOST
+                |--------------------------------------------------------------------------
+                */
+
+                $html = str_replace(
+                    'http://127.0.0.1',
+                    '',
+                    $html
+                );
+
+                $html = str_replace(
+                    'http://localhost',
+                    '',
+                    $html
+                );
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | CREATE FILE
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    $uri === '/' ||
+                    $uri === ''
+                ) {
+
+                    $filePath =
+                        $distPath .
+                        '/index.html';
+
+                } else {
+
+                    $dirPath =
+                        $distPath .
+                        '/' .
+                        trim(
+                            $uri,
+                            '/'
+                        );
+
+
+                    File::makeDirectory(
+                        $dirPath,
+                        0755,
+                        true
+                    );
+
+
+                    $filePath =
+                        $dirPath .
+                        '/index.html';
+
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | WRITE HTML
+                |--------------------------------------------------------------------------
+                */
+
+                File::put(
+                    $filePath,
+                    $html
+                );
+
+
+                $this->info(
+                    "  Exported: {$name} -> {$uri}"
+                );
+
+
             } catch (\Throwable $e) {
-                $this->error("  Failed: {$name} ({$uri}) - {$e->getMessage()}");
+
+                $this->error(
+                    "  Failed: {$name} ({$uri}) - " .
+                    $e->getMessage()
+                );
+
             }
+
         }
 
-        $this->info("Static export complete! Output: dist/");
+
+        /*
+        |--------------------------------------------------------------------------
+        | DONE
+        |--------------------------------------------------------------------------
+        */
+
+        $this->newLine();
+
+        $this->info(
+            'Static export complete!'
+        );
+
+        $this->info(
+            'Output: dist/'
+        );
+
+
         return Command::SUCCESS;
     }
 
-    private function copyDirectory(string $source, string $destination): void
-    {
-        if (!is_dir($destination)) {
-            File::makeDirectory($destination, 0755, true);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | COPY DIRECTORY
+    |--------------------------------------------------------------------------
+    */
+
+    private function copyDirectory(
+        string $source,
+        string $destination
+    ): void {
+
+        if (
+            !File::isDirectory(
+                $destination
+            )
+        ) {
+
+            File::makeDirectory(
+                $destination,
+                0755,
+                true
+            );
+
         }
 
-        foreach (File::allFiles($source) as $item) {
-            $relativePath = ltrim(str_replace($source, '', $item->getPathname()), DIRECTORY_SEPARATOR);
-            $destFile = $destination . DIRECTORY_SEPARATOR . $relativePath;
-            $destDir = dirname($destFile);
 
-            if (!File::isDirectory($destDir)) {
-                File::makeDirectory($destDir, 0755, true);
+        foreach (
+            File::allFiles($source)
+            as $file
+        ) {
+
+            $relativePath =
+                ltrim(
+                    str_replace(
+                        $source,
+                        '',
+                        $file->getPathname()
+                    ),
+                    DIRECTORY_SEPARATOR
+                );
+
+
+            $destinationFile =
+                $destination .
+                DIRECTORY_SEPARATOR .
+                $relativePath;
+
+
+            $destinationDirectory =
+                dirname(
+                    $destinationFile
+                );
+
+
+            if (
+                !File::isDirectory(
+                    $destinationDirectory
+                )
+            ) {
+
+                File::makeDirectory(
+                    $destinationDirectory,
+                    0755,
+                    true
+                );
+
             }
 
-            File::copy($item->getPathname(), $destFile);
+
+            File::copy(
+                $file->getPathname(),
+                $destinationFile
+            );
+
         }
+
     }
 }

@@ -19,7 +19,7 @@
     width: 600px;
     height: 600px;
     background: radial-gradient(circle,
-            rgba(99, 102, 241, 0.15),
+            rgba(37, 99, 235, 0.1),
             transparent 70%);
     filter: blur(60px);
     pointer-events: none;
@@ -34,7 +34,7 @@
     width: 500px;
     height: 500px;
     background: radial-gradient(circle,
-            rgba(34, 211, 238, 0.1),
+            rgba(29, 78, 216, 0.08),
             transparent 70%);
     filter: blur(60px);
     pointer-events: none;
@@ -87,15 +87,15 @@
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    color: var(--accent-secondary);
+    color: var(--accent-soft);
     font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     padding: 8px 18px;
-    border: 1px solid rgba(34, 211, 238, 0.2);
+    border: 1px solid rgba(29, 78, 216, 0.2);
     border-radius: 30px;
-    background: rgba(34, 211, 238, 0.06);
+    background: rgba(29, 78, 216, 0.05);
     backdrop-filter: blur(8px);
 }
 
@@ -103,8 +103,8 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #22c55e;
-    box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+    background: var(--accent);
+    box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
     animation: dotPulse 2s ease-in-out infinite;
 }
 
@@ -112,11 +112,11 @@
 
     0%,
     100% {
-        box-shadow: 0 0 4px rgba(34, 197, 94, 0.4);
+        box-shadow: 0 0 4px rgba(37, 99, 235, 0.35);
     }
 
     50% {
-        box-shadow: 0 0 12px rgba(34, 197, 94, 0.8);
+        box-shadow: 0 0 12px rgba(37, 99, 235, 0.7);
     }
 }
 
@@ -184,8 +184,8 @@
     font-size: 13px;
     font-weight: 500;
     color: var(--text-secondary);
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 8px;
     transition:
         border-color 0.3s ease,
@@ -196,7 +196,7 @@
 .stack-tag:hover {
     border-color: var(--border-hover);
     color: var(--accent-soft);
-    background: rgba(99, 102, 241, 0.06);
+    background: rgba(29, 78, 216, 0.05);
 }
 
 .stack-tag i {
@@ -273,7 +273,7 @@
     border-radius: 50%;
     object-fit: cover;
     display: block;
-    border: 3px solid rgba(99, 102, 241, 0.2);
+    border: 3px solid rgba(29, 78, 216, 0.2);
 
     /* Keep the actual photo completely steady */
     animation: none !important;
